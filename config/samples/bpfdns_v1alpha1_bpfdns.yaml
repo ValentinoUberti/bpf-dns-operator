@@ -1,0 +1,8 @@
+apiVersion: bpfdns.bpf.dns/v1alpha1
+kind: Bpfdns
+metadata:
+  name: bpfdns-sample
+spec:
+  blockDns:
+    - dnsName: www.google.com
+    - dnsName: www.youtube.com

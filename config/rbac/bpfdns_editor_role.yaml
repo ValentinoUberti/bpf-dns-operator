@@ -1,0 +1,24 @@
+# permissions for end users to edit bpfdns.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: bpfdns-editor-role
+rules:
+- apiGroups:
+  - bpfdns.bpf.dns
+  resources:
+  - bpfdns
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - bpfdns.bpf.dns
+  resources:
+  - bpfdns/status
+  verbs:
+  - get

@@ -1,0 +1,47 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: ClusterServiceVersion
+metadata:
+  annotations:
+    alm-examples: '[]'
+    capabilities: Basic Install
+  name: bpf-dns-operator.v0.0.0
+  namespace: placeholder
+spec:
+  apiservicedefinitions: {}
+  customresourcedefinitions:
+    owned:
+    - description: Bpfdns is the Schema for the bpfdns API
+      displayName: Bpfdns
+      kind: Bpfdns
+      name: bpfdns.bpfdns.bpf.dns
+      version: v1alpha1
+  description: test
+  displayName: bpf-dns
+  icon:
+  - base64data: ""
+    mediatype: ""
+  install:
+    spec:
+      deployments: null
+    strategy: ""
+  installModes:
+  - supported: false
+    type: OwnNamespace
+  - supported: false
+    type: SingleNamespace
+  - supported: false
+    type: MultiNamespace
+  - supported: true
+    type: AllNamespaces
+  keywords:
+  - bpf
+  links:
+  - name: Bpf Dns Operator
+    url: https://bpf-dns-operator.domain
+  maintainers:
+  - email: info@valentinouberti.com
+    name: valentino
+  maturity: alpha
+  provider:
+    name: ValezProvider
+  version: 0.0.0
