@@ -4,6 +4,7 @@ go 1.15
 
 require (
 	github.com/apex/log v1.9.0
+	github.com/dropbox/goebpf v0.0.0-20210223223402-d54e462ac389 // indirect
 	github.com/go-logr/logr v0.3.0
 	github.com/onsi/ginkgo v1.14.1
 	github.com/onsi/gomega v1.10.2
