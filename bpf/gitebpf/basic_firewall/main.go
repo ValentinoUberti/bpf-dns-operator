@@ -11,9 +11,11 @@ import (
 	"os"
 	"os/signal"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/dropbox/goebpf"
+	"golang.org/x/sys/unix"
 )
 
 type ipAddressList []string
@@ -30,6 +32,15 @@ func main() {
 	}
 	if len(ipList) == 0 {
 		fatalError("at least one IPv4 address to DROP required (-drop)")
+	}
+
+	var rLimit syscall.Rlimit
+	rLimit.Max = unix.RLIM_INFINITY
+	rLimit.Cur = unix.RLIM_INFINITY
+
+	err := syscall.Setrlimit(unix.RLIMIT_MEMLOCK, &rLimit)
+	if err != nil {
+		fmt.Println("Error Setting Rlimit ", err)
 	}
 
 	// Create eBPF system

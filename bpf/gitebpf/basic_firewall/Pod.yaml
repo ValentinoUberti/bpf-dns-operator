@@ -1,0 +1,166 @@
+kind: Pod
+apiVersion: v1
+metadata:
+  name: ocp-8vrr7-infra-j6thw-debug
+  namespace: openshift-debug-node-dsh95kmkf4
+  selfLink: >-
+    /api/v1/namespaces/openshift-debug-node-dsh95kmkf4/pods/ocp-8vrr7-infra-j6thw-debug
+  uid: bc971359-e1e1-4d3b-b589-8e1896e6db25
+  resourceVersion: '11351870'
+  creationTimestamp: '2021-03-05T15:51:09Z'
+  annotations:
+    debug.openshift.io/source-container: container-00
+    debug.openshift.io/source-resource: '/v1, Resource=nodes/ocp-8vrr7-infra-j6thw'
+  managedFields:
+    - manager: oc
+      operation: Update
+      apiVersion: v1
+      time: '2021-03-05T15:51:09Z'
+      fieldsType: FieldsV1
+      fieldsV1:
+        'f:metadata':
+          'f:annotations':
+            .: {}
+            'f:debug.openshift.io/source-container': {}
+            'f:debug.openshift.io/source-resource': {}
+        'f:spec':
+          'f:nodeName': {}
+          'f:volumes':
+            .: {}
+            'k:{"name":"host"}':
+              .: {}
+              'f:hostPath':
+                .: {}
+                'f:path': {}
+                'f:type': {}
+              'f:name': {}
+          'f:containers':
+            'k:{"name":"container-00"}':
+              'f:tty': {}
+              'f:image': {}
+              'f:volumeMounts':
+                .: {}
+                'k:{"mountPath":"/host"}':
+                  .: {}
+                  'f:mountPath': {}
+                  'f:name': {}
+              'f:terminationMessagePolicy': {}
+              .: {}
+              'f:resources': {}
+              'f:stdin': {}
+              'f:stdinOnce': {}
+              'f:command': {}
+              'f:securityContext':
+                .: {}
+                'f:privileged': {}
+                'f:runAsUser': {}
+              'f:terminationMessagePath': {}
+              'f:imagePullPolicy': {}
+              'f:name': {}
+          'f:dnsPolicy': {}
+          'f:restartPolicy': {}
+          'f:hostPID': {}
+          'f:schedulerName': {}
+          'f:hostNetwork': {}
+          'f:terminationGracePeriodSeconds': {}
+          'f:enableServiceLinks': {}
+          'f:securityContext': {}
+    - manager: kubelet
+      operation: Update
+      apiVersion: v1
+      time: '2021-03-05T15:51:11Z'
+      fieldsType: FieldsV1
+      fieldsV1:
+        'f:status':
+          'f:conditions':
+            .: {}
+            'k:{"type":"ContainersReady"}':
+              .: {}
+              'f:lastProbeTime': {}
+              'f:lastTransitionTime': {}
+              'f:status': {}
+              'f:type': {}
+            'k:{"type":"Initialized"}':
+              .: {}
+              'f:lastProbeTime': {}
+              'f:lastTransitionTime': {}
+              'f:status': {}
+              'f:type': {}
+            'k:{"type":"PodScheduled"}':
+              .: {}
+              'f:lastProbeTime': {}
+              'f:lastTransitionTime': {}
+              'f:status': {}
+              'f:type': {}
+            'k:{"type":"Ready"}':
+              .: {}
+              'f:lastProbeTime': {}
+              'f:lastTransitionTime': {}
+              'f:status': {}
+              'f:type': {}
+          'f:containerStatuses': {}
+          'f:hostIP': {}
+          'f:phase': {}
+          'f:podIP': {}
+          'f:podIPs':
+            .: {}
+            'k:{"ip":"172.27.4.237"}':
+              .: {}
+              'f:ip': {}
+          'f:startTime': {}
+spec:
+  restartPolicy: Never
+  serviceAccountName: default
+  imagePullSecrets:
+    - name: default-dockercfg-sk7sm
+  hostPID: true
+  priority: 0
+  schedulerName: default-scheduler
+  hostNetwork: true
+  enableServiceLinks: true
+  terminationGracePeriodSeconds: 30
+  preemptionPolicy: PreemptLowerPriority
+  nodeName: ocp-8vrr7-infra-j6thw
+  securityContext: {}
+  containers:
+    - resources: {}
+      stdin: true
+      terminationMessagePath: /dev/termination-log
+      stdinOnce: true
+      name: container-00
+      command:
+        - /bin/sh
+      securityContext:
+        privileged: true
+        runAsUser: 0
+      imagePullPolicy: IfNotPresent
+      volumeMounts:
+        - name: host
+          mountPath: /host
+        - name: default-token-lgmzl
+          readOnly: true
+          mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+      terminationMessagePolicy: File
+      tty: true
+      image: >-
+        quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:5a1ff3e2240f10a6c7ca5e2364149286c19df32575a479e6f2b10009ad64fedd
+  serviceAccount: default
+  volumes:
+    - name: host
+      hostPath:
+        path: /
+        type: Directory
+    - name: default-token-lgmzl
+      secret:
+        secretName: default-token-lgmzl
+        defaultMode: 420
+  dnsPolicy: ClusterFirst
+  tolerations:
+    - key: node.kubernetes.io/not-ready
+      operator: Exists
+      effect: NoExecute
+      tolerationSeconds: 300
+    - key: node.kubernetes.io/unreachable
+      operator: Exists
+      effect: NoExecute
+      tolerationSeconds: 300
