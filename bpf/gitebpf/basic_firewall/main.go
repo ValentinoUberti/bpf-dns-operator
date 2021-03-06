@@ -46,7 +46,7 @@ func main() {
 	// Create eBPF system
 	bpf := goebpf.NewDefaultEbpfSystem()
 	// Load .ELF files compiled by clang/llvm
-	err := bpf.LoadElf(*elf)
+	err = bpf.LoadElf(*elf)
 	if err != nil {
 		fatalError("LoadElf() failed: %v", err)
 	}
