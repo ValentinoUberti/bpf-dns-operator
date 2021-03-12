@@ -2,7 +2,7 @@
 // Full license can be found in the LICENSE file.
 
 // Basic XDP firewall (IPv4 blacklisting)
-
+// Added perf event when droppin occurs <Valentino Uberti info@uberticonsulting.com>
 #include "bpf_helpers.h"
 
 #define MAX_RULES 16
