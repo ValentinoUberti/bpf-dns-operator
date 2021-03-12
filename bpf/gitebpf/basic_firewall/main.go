@@ -27,10 +27,10 @@ var elf = flag.String("elf", "ebpf_prog/xdp_fw.elf", "clang/llvm compiled binary
 var ipList ipAddressList
 
 
-func getNMDevices() {
+func checkNMDevices(deviceToCheck string ) {
 
 	/* Create new instance of gonetworkmanager */
-	fmt.Println("here")
+	
 	nm, err := gonetworkmanager.NewNetworkManager()
 	if err != nil {
 		fmt.Println(err.Error())
@@ -61,16 +61,16 @@ func getNMDevices() {
 
 func main() {
 
+    
+	iface, exists := os.LookupEnv("BPF_IFACE")
+	if !exists {
+		fatalError("BPF_IFACE env not set")
+	}
+   
 
-	getNMDevices()
-
-	time.Sleep(time.Second * 10)
-	
 	flag.Var(&ipList, "drop", "IPv4 CIDR to DROP traffic from, repeatable")
 	flag.Parse()
-	if *iface == "" {
-		fatalError("-iface is required.")
-	}
+	
 	if len(ipList) == 0 {
 		fatalError("at least one IPv4 address to DROP required (-drop)")
 	}
@@ -128,7 +128,7 @@ func main() {
 	}
 
 	// Attach to interface
-	err = xdp.Attach(*iface)
+	err = xdp.Attach(iface)
 	if err != nil {
 		fatalError("xdp.Attach(): %v", err)
 	}

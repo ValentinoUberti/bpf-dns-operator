@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  
+  labels:
+    app: test
+    app.kubernetes.io/component: test
+    app.kubernetes.io/instance: test
+  name: test
+  namespace: test
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      deployment: test
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        openshift.io/generated-by: OpenShiftNewApp
+      creationTimestamp: null
+      labels:
+        deployment: test
+    spec:
+      containers:
+      - args:
+        - "1000"
+        command:
+        - sleep
+        image: image-registry.openshift-image-registry.svc:5000/test/test@sha256:4819c626e8dbd29345b588b82520b62bc10ac5e6787e994d532f1cb7453ece59
+        imagePullPolicy: IfNotPresent
+        name: test
+        securityContext:
+          privileged: true
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /var/run/dbus/
+          name: volumes
+      dnsPolicy: ClusterFirst
+      enableServiceLinks: true
+      hostNetwork: true
+      hostPID: true
+      priority: 0
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext:
+        runAsUser: 0
+      serviceAccount: superman
+      serviceAccountName: superman
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - hostPath:
+          path: /var/run/dbus/
+          type: ""
+        name: volumes
