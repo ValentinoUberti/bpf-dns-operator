@@ -16,6 +16,8 @@ import (
 
 	"github.com/dropbox/goebpf"
 	"golang.org/x/sys/unix"
+
+	"github.com/Wifx/gonetworkmanager"
 )
 
 type ipAddressList []string
@@ -24,7 +26,46 @@ var iface = flag.String("iface", "", "Interface to bind XDP program to")
 var elf = flag.String("elf", "ebpf_prog/xdp_fw.elf", "clang/llvm compiled binary file")
 var ipList ipAddressList
 
+
+func getNMDevices() {
+
+	/* Create new instance of gonetworkmanager */
+	fmt.Println("here")
+	nm, err := gonetworkmanager.NewNetworkManager()
+	if err != nil {
+		fmt.Println(err.Error())
+		os.Exit(1)
+	}
+
+	/* Get devices */
+	devices, err := nm.GetPropertyAllDevices()
+	if err != nil {
+		fmt.Println(err.Error())
+		os.Exit(1)
+	}
+
+	/* Show each device path and interface name */
+	for _, device := range devices {
+
+		deviceInterface, err := device.GetPropertyInterface()
+		if err != nil {
+			fmt.Println(err.Error())
+			continue
+		}
+
+		fmt.Println(deviceInterface + " - " + string(device.GetPath()))
+	}
+
+}
+
+
 func main() {
+
+
+	getNMDevices()
+
+	time.Sleep(time.Second * 10)
+	
 	flag.Var(&ipList, "drop", "IPv4 CIDR to DROP traffic from, repeatable")
 	flag.Parse()
 	if *iface == "" {
