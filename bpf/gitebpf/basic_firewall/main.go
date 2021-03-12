@@ -4,6 +4,9 @@
 package main
 
 import (
+	"bytes"
+	"encoding/binary"
+	"encoding/hex"
 	"errors"
 	"flag"
 	"fmt"
@@ -12,7 +15,6 @@ import (
 	"os/signal"
 	"strings"
 	"syscall"
-	"time"
 
 	"github.com/dropbox/goebpf"
 	"golang.org/x/sys/unix"
@@ -20,6 +22,7 @@ import (
 
 type ipAddressList []string
 
+// Set the RLIMIT_MEMLOCK limits to infinity <--- REQUIRED!
 func setRLimitMemlock() error {
 
 	var rLimit syscall.Rlimit
@@ -30,9 +33,19 @@ func setRLimitMemlock() error {
 	return err
 }
 
+const (
+	// Size of structure used to pass metadata
+	metadataSize = 12
+)
+
+// In sync with xdp_dump.c  "struct perf_event_item"
+type perfEventItem struct {
+	SrcIp, DstIp uint32
+}
+
 func main() {
 
-	var elf = flag.String("elf", "ebpf_prog/xdp_fw.elf", "clang/llvm compiled binary file")
+	var elf = flag.String("elf", "ebpf_prog/xdp_fw_events.elf", "clang/llvm compiled binary file")
 	var ipList ipAddressList
 
 	if setRLimitMemlock() != nil {
@@ -70,6 +83,12 @@ func main() {
 		fatalError("eBPF map 'blacklist' not found")
 	}
 
+	// Find special "PERF_EVENT" eBPF map
+	perfmap := bpf.GetMapByName("perfmap")
+	if perfmap == nil {
+		fatalError("eBPF map 'perfmap' not found")
+	}
+
 	// Get XDP program. Name simply matches function from xdp_fw.c:
 	//      int firewall(struct xdp_md *ctx) {
 	xdp := bpf.GetProgramByName("firewall")
@@ -105,29 +124,88 @@ func main() {
 	ctrlC := make(chan os.Signal, 1)
 	signal.Notify(ctrlC, os.Interrupt)
 
+	// Start listening to Perf Events
+	perf, _ := goebpf.NewPerfEvents(perfmap)
+	perfEvents, err := perf.StartForAllProcessesAndCPUs(4096)
+	if err != nil {
+		fatalError("perf.StartForAllProcessesAndCPUs(): %v", err)
+	}
+
 	fmt.Println("XDP program successfully loaded and attached. Counters refreshed every second.")
 	fmt.Println("Press CTRL+C to stop.")
 	fmt.Println()
 
-	// Print stat every second / exit on CTRL+C
-	ticker := time.NewTicker(1 * time.Second)
-	for {
-		select {
-		case <-ticker.C:
-			fmt.Println("IP                 DROPs")
-			for i := 0; i < len(ipList); i++ {
-				value, err := matches.LookupInt(i)
-				if err != nil {
-					fatalError("LookupInt failed: %v", err)
+	/*
+		// Print stat every second / exit on CTRL+C
+		ticker := time.NewTicker(1 * time.Second)
+		for {
+			select {
+			case <-ticker.C:
+				fmt.Println("IP                 DROPs")
+				for i := 0; i < len(ipList); i++ {
+					value, err := matches.LookupInt(i)
+					if err != nil {
+						fatalError("LookupInt failed: %v", err)
+					}
+					fmt.Printf("%18s    %d\n", ipList[i], value)
 				}
-				fmt.Printf("%18s    %d\n", ipList[i], value)
+				fmt.Println()
+			case <-ctrlC:
+				fmt.Println("\nDetaching program and exit")
+				return
 			}
-			fmt.Println()
-		case <-ctrlC:
-			fmt.Println("\nDetaching program and exit")
-			return
+		}*/
+
+	go func() {
+		var event perfEventItem
+		for {
+			if eventData, ok := <-perfEvents; ok {
+				reader := bytes.NewReader(eventData)
+				binary.Read(reader, binary.LittleEndian, &event)
+				fmt.Printf("TCP: %v -> %v BLOCKED ",
+					intToIPv4(event.SrcIp),
+					intToIPv4(event.DstIp),
+				)
+				if len(eventData)-metadataSize > 0 {
+					// event contains packet sample as well
+					fmt.Println(hex.Dump(eventData[metadataSize:]))
+				}
+
+				for i := 0; i < len(ipList); i++ {
+					value, err := matches.LookupInt(i)
+					if err != nil {
+						fatalError("LookupInt failed: %v", err)
+					}
+
+					if ipList[i][:len(ipList[i])-3] == intToIPv4(event.SrcIp).String() {
+						if value <= 1 {
+							fmt.Printf("%d time\n", value)
+						} else {
+							fmt.Printf("%d times\n", value)
+
+						}
+
+					}
+
+					//fmt.Printf("%18s    %d\n", ipList[i], value)
+				}
+			} else {
+				// Update channel closed
+				break
+			}
 		}
-	}
+	}()
+
+	// Wait until Ctrl+C pressed
+	<-ctrlC
+
+	// Stop perf events and print summary
+	perf.Stop()
+	fmt.Println("\nSummary:")
+	fmt.Printf("\t%d Event(s) Received\n", perf.EventsReceived)
+	fmt.Printf("\t%d Event(s) lost (e.g. small buffer, delays in processing)\n", perf.EventsLost)
+	fmt.Println("\nDetaching program and exit...")
+
 }
 
 func fatalError(format string, args ...interface{}) {
@@ -174,4 +252,14 @@ func (i *ipAddressList) Set(value string) error {
 	// Valid, add to the list
 	*i = append(*i, value)
 	return nil
+}
+
+func intToIPv4(ip uint32) net.IP {
+	res := make([]byte, 4)
+	binary.LittleEndian.PutUint32(res, ip)
+	return net.IP(res)
+}
+
+func ntohs(value uint16) uint16 {
+	return ((value & 0xff) << 8) | (value >> 8)
 }
