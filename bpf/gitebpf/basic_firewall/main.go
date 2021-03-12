@@ -16,78 +16,45 @@ import (
 
 	"github.com/dropbox/goebpf"
 	"golang.org/x/sys/unix"
-
-	"github.com/Wifx/gonetworkmanager"
 )
 
 type ipAddressList []string
 
-var iface = flag.String("iface", "", "Interface to bind XDP program to")
-var elf = flag.String("elf", "ebpf_prog/xdp_fw.elf", "clang/llvm compiled binary file")
-var ipList ipAddressList
-
-
-func checkNMDevices(deviceToCheck string ) {
-
-	/* Create new instance of gonetworkmanager */
-	
-	nm, err := gonetworkmanager.NewNetworkManager()
-	if err != nil {
-		fmt.Println(err.Error())
-		os.Exit(1)
-	}
-
-	/* Get devices */
-	devices, err := nm.GetPropertyAllDevices()
-	if err != nil {
-		fmt.Println(err.Error())
-		os.Exit(1)
-	}
-
-	/* Show each device path and interface name */
-	for _, device := range devices {
-
-		deviceInterface, err := device.GetPropertyInterface()
-		if err != nil {
-			fmt.Println(err.Error())
-			continue
-		}
-
-		fmt.Println(deviceInterface + " - " + string(device.GetPath()))
-	}
-
-}
-
-
-func main() {
-
-    
-	iface, exists := os.LookupEnv("BPF_IFACE")
-	if !exists {
-		fatalError("BPF_IFACE env not set")
-	}
-   
-
-	flag.Var(&ipList, "drop", "IPv4 CIDR to DROP traffic from, repeatable")
-	flag.Parse()
-	
-	if len(ipList) == 0 {
-		fatalError("at least one IPv4 address to DROP required (-drop)")
-	}
+func setRLimitMemlock() error {
 
 	var rLimit syscall.Rlimit
 	rLimit.Max = unix.RLIM_INFINITY
 	rLimit.Cur = unix.RLIM_INFINITY
 
 	err := syscall.Setrlimit(unix.RLIMIT_MEMLOCK, &rLimit)
-	if err != nil {
-		fmt.Println("Error Setting Rlimit ", err)
+	return err
+}
+
+func main() {
+
+	var elf = flag.String("elf", "ebpf_prog/xdp_fw.elf", "clang/llvm compiled binary file")
+	var ipList ipAddressList
+
+	if setRLimitMemlock() != nil {
+		fatalError("Error setting RLIMIT_MEMLOCK: check permissions")
+	}
+
+	iface, exists := os.LookupEnv("BPF_IFACE")
+	if !exists {
+		fatalError("BPF_IFACE env not set")
+	}
+
+	flag.Var(&ipList, "drop", "IPv4 CIDR to DROP traffic from, repeatable")
+	flag.Parse()
+
+	if len(ipList) == 0 {
+		fatalError("at least one IPv4 address to DROP required (-drop)")
 	}
 
 	// Create eBPF system
 	bpf := goebpf.NewDefaultEbpfSystem()
 	// Load .ELF files compiled by clang/llvm
-	err = bpf.LoadElf(*elf)
+	err := bpf.LoadElf(*elf)
 	if err != nil {
 		fatalError("LoadElf() failed: %v", err)
 	}
