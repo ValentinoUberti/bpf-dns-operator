@@ -177,6 +177,7 @@ func main() {
 						fatalError("LookupInt failed: %v", err)
 					}
 
+					// Remove last three chars "/xx"
 					if ipList[i][:len(ipList[i])-3] == intToIPv4(event.SrcIp).String() {
 						if value <= 1 {
 							fmt.Printf("%d time\n", value)

@@ -1,16 +1,12 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  annotations:
-    deployment.kubernetes.io/revision: "18"
-    image.openshift.io/triggers: '[{"from":{"kind":"ImageStreamTag","name":"test:latest"},"fieldPath":"spec.template.spec.containers[?(@.name==\"test\")].image"}]'
-    openshift.io/generated-by: OpenShiftNewApp
   labels:
     app: test
     app.kubernetes.io/component: test
     app.kubernetes.io/instance: test
   name: test
-  namespace: test
+  
 spec:
   progressDeadlineSeconds: 600
   replicas: 1
@@ -39,7 +35,7 @@ spec:
         env:
         - name: BPF_IFACE
           value: ens192
-        image: image-registry.openshift-image-registry.svc:5000/test/test@sha256:4819c626e8dbd29345b588b82520b62bc10ac5e6787e994d532f1cb7453ece59
+        image: quay.io/valeube/basic_firewall
         imagePullPolicy: IfNotPresent
         name: test
         securityContext:

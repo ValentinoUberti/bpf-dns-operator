@@ -18,6 +18,8 @@ package controllers
 
 import (
 	"context"
+	"fmt"
+	"net"
 
 	"github.com/apex/log"
 	"github.com/go-logr/logr"
@@ -39,6 +41,8 @@ type BpfdnsReconciler struct {
 	Scheme *runtime.Scheme
 }
 
+type Ipv4InjectList []string
+
 // +kubebuilder:rbac:groups=bpfdns.bpf.dns,resources=bpfdns,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=bpfdns.bpf.dns,resources=bpfdns/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=bpfdns.bpf.dns,resources=bpfdns/finalizers,verbs=update
@@ -58,6 +62,8 @@ func (r *BpfdnsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	// your logic here
 	bpfDNSInstance := &bpfdnsv1alpha1.Bpfdns{}
 	workerNodes := &corev1.NodeList{}
+
+	Ipsv4ToInject := make([]string, 0)
 
 	workerSelector := map[string]string{
 		"node-role.kubernetes.io/worker": "",
@@ -97,10 +103,20 @@ func (r *BpfdnsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 
 	}
 
-	log.Info("Here")
-
 	for _, v := range bpfDNSInstance.Spec.BlockDns {
 		log.Info(v.DnsName)
+		iprecords, _ := net.LookupIP(v.DnsName)
+		for _, ip := range iprecords {
+			if ipv4 := ip.To4(); ipv4 != nil {
+
+				Ipsv4ToInject = append(Ipsv4ToInject, ipv4.To4().String())
+
+			}
+		}
+	}
+
+	for _, v := range Ipsv4ToInject {
+		fmt.Println("IPv4: ", v)
 	}
 
 	return ctrl.Result{}, nil
